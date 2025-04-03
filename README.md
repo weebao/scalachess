@@ -179,6 +179,174 @@ classDiagram
 
 ```
 
+```mermaid
+classDiagram
+    direction LR
+
+    %% Main Game Class
+    class ShogiGame {
+        +currentSituation: Situation
+        +moveHistory: List~MoveData~
+        +gameStatus: GameStatus
+        +winner: Option~Color~
+        +applyMove(MoveData): Either~String, ShogiGame~
+        +legalMoves(): List~MoveData~
+        +isGameOver(): Boolean
+        +resultMessage(): String
+    }
+
+    %% Game State Components
+    class Situation {
+        +Board board
+        +Map~Color, Hand~ hands
+        +Color activePlayer
+        +GameHistory history
+    }
+
+    class Board {
+        +Map~Square, Piece~ positions
+    }
+
+    class Hand {
+        +Map~PieceType, Int~ capturedPieces
+    }
+
+    class Piece {
+        +Color color
+        +PieceType type
+        +Bool promoted
+    }
+
+    class Square {
+        +file: Int
+        +rank: Int
+    }
+
+    class GameHistory {
+        +lastMove: Option~MoveData~
+        +positionHashes: List~Long~
+        +moveCount: Int
+    }
+
+    %% Enumerations
+    class Color {
+        <<enumeration>>
+        Black
+        White
+    }
+
+    class PieceType {
+        <<enumeration>>
+        King
+        Gold
+        Silver
+        Knight
+        Lance
+        Rook
+        Bishop
+        Pawn
+        PromotedSilver
+        PromotedKnight
+        PromotedLance
+        Dragon
+        Horse
+        Tokin
+    }
+
+    class GameStatus {
+        <<enumeration>>
+        Ongoing
+        Checkmate
+        Stalemate
+        RepetitionDraw
+        MoveLimitDraw
+    }
+
+    %% Move System
+    class MoveData {
+        <<interface>>
+    }
+
+    class PieceMove {
+        +from: Square
+        +to: Square
+        +piece: Piece
+        +capturedType: PieceType
+        +promotion: Boolean
+    }
+
+    class PieceDrop {
+        +type: PieceType
+        +color: Color
+        +to: Square
+    }
+
+    %% Movement System
+    class MovementStrategy {
+        <<interface>>
+        +getLegalMoves(Square, Board): Set~Square~
+    }
+
+    class GoldMovement
+    class SilverMovement
+    class DragonMovement
+
+    class MovementResolver {
+        +getStrategyFor(PieceType): MovementStrategy
+    }
+
+    class MoveGenerator {
+        +currentSituation: Situation
+        +generatePieceMoves(): List~PieceMove~
+        +generateDrops(): List~PieceDrop~
+        +generateAllLegalMoves(): List~MoveData~
+    }
+
+    class GameRules {
+        +isKingInCheck(Board, Color): Boolean
+        +isCheckmate(Situation): Boolean
+        +checkRepetition(GameHistory): Boolean
+        +checkMoveLimit(GameHistory): Boolean
+        +validateDrop(PieceType, Square, Color, Situation): Boolean
+    }
+
+    %% Relationships
+    ShogiGame *-- Situation : maintains
+    ShogiGame *-- MoveData : records
+    ShogiGame --> MoveGenerator : uses
+    ShogiGame --> GameRules : enforces
+    ShogiGame --> GameStatus : tracks
+
+    Situation *-- Board : contains
+    Situation *-- Hand : manages
+    Situation *-- GameHistory : preserves
+    Situation --> Color : tracks
+
+    MoveGenerator ..> Situation : analyzes
+    MoveGenerator ..> MovementResolver : utilizes
+    MoveGenerator ..> GameRules : consults
+    MoveGenerator ..> MoveData : produces
+
+    GameRules ..> Board : inspects
+    GameRules ..> MovementResolver : references
+    GameRules ..> Situation : evaluates
+
+    Piece --> PieceType : has
+    Piece --> Color : has
+    Board *-- Piece : positions
+    Board *-- Square : grid
+    Hand *-- PieceType : tracks
+
+    MovementResolver --> MovementStrategy : selects
+    GoldMovement --|> MovementStrategy : implements
+    SilverMovement --|> MovementStrategy : implements
+    DragonMovement --|> MovementStrategy : implements
+
+    PieceMove --|> MoveData : implements
+    PieceDrop --|> MoveData : implements
+
+```
+
 It is entirely functional, immutable, and free of side effects.
 
 INSTALL
